@@ -31,4 +31,10 @@ else
   Updating PATH env variables to see cudalign
  ----------------------------"
   export PATH=$PATH:/home/ubuntu/MASA-CUDAlign/masa-cudalign-3.9.1.1024
+  if [ ! -d "tests/" ]; then
+    mkdir tests
+    s3fs rafaela-masa-cudalign tests/
+fi
+cd tests/
+
 fi
