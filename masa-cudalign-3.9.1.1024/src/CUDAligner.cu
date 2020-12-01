@@ -211,9 +211,9 @@ __device__ int findMaxSmall(int idx, int val) {
  */
 static __device__ int get_flush_id(const int i, const int i0, const int i1) {
     if (i < i0 || i >= i1) {
-    	return 0;
+	return 0;
     } else {
-    	return (i+ALPHA < i1) ? -1 : ((i1-i0-1)%ALPHA)+1;
+	return (i+ALPHA < i1) ? -1 : ((i1-i0-1)%ALPHA)+1;
     }
 }
 
@@ -282,9 +282,9 @@ __device__ void kernel_sw(const unsigned char s0, const unsigned char s1,
     int v1 = h11+((s1!=s0)?DNA_MISMATCH:DNA_MATCH);
 
     if (RECURRENCE_TYPE == SMITH_WATERMAN) {
-    	*h00 = my_max4(0, v1, *e00, *f00);
+	*h00 = my_max4(0, v1, *e00, *f00);
     } else if (RECURRENCE_TYPE == NEEDLEMAN_WUNSCH) {
-    	*h00 = my_max3(v1, *e00, *f00);
+	*h00 = my_max3(v1, *e00, *f00);
     }
 }
 
@@ -302,15 +302,15 @@ __device__ void kernel_sw(const unsigned char s0, const unsigned char s1,
  *
  * @param[in] i			The index of the row.
  * @param[in] j			The index of the column.
- * @param[in,out] max 	Input: previous maximum score.
- * 						Output: updated maximum score.
- * @param[in,out] pos 	Input: coordinates of the previous maximum score.
- * 								See the $absolute_row$ parameter.
- *            			Output: updated coordinates of the maximum score.
- * @param[in] h00 	The score of cell (i+inc,j). Only the H component is necessary,
- *                   	since the other components E and F cannot be greater than H.
- * @param[in] inc 	This is the row id inside each thread neighborhood.
- * @param[in] absolute_row 	If it is true, the $pos$ parameter stores the absolute
+ * @param[in,out] max	Input: previous maximum score.
+ *						Output: updated maximum score.
+ * @param[in,out] pos	Input: coordinates of the previous maximum score.
+ *								See the $absolute_row$ parameter.
+ *			Output: updated coordinates of the maximum score.
+ * @param[in] h00	The score of cell (i+inc,j). Only the H component is necessary,
+ *			since the other components E and F cannot be greater than H.
+ * @param[in] inc	This is the row id inside each thread neighborhood.
+ * @param[in] absolute_row	If it is true, the $pos$ parameter stores the absolute
  *                   coordinates of the cell (i+inc, j). Otherwise, if
  *                   $store$ is false, the $pos$ parameters stores the relative
  *                   coordinates of the cell (inc, j).
@@ -334,29 +334,29 @@ __device__ void kernel_check_max(const int i, const int j, int *max,
  * (i,j), (i+1,j), (i+2,j), (i+3,j), considering that ALPHA is 4.
  *
  * @tparam RECURRENCE_TYPE	Defines with recurrence function will be use. It
- * 								can be SMITH_WATERMAN (local alignment) or
- * 								NEEDLEMAN_WUNSCH (global alignment).
+ *				can be SMITH_WATERMAN (local alignment) or
+ *				NEEDLEMAN_WUNSCH (global alignment).
  * @tparam FLUSH_LAST_ROW	Defines if the flush_id parameter will be used.
- * 								If it is false,	all the ALPHA rows will be
- * 								processed regardless if they are out-of-range.
- * 								Otherwise, only valid rows will be processed.
+ *				If it is false,	all the ALPHA rows will be
+ *				processed regardless if they are out-of-range.
+ *				Otherwise, only valid rows will be processed.
  *
  * @param[in] i		The index of the row (top cell).
  * @param[in] j		The index of the column.
  * @param[in] s1	One nucleotide related to sequence#1 (horizontal).
  * @param[in] ss	A block with 4 (ALPHA) nucleotides related to
- * 						sequence#0 (vertical).
+ *						sequence#0 (vertical).
  * @param[in,out] left_e	Input: Values of E(i,j-1)...E(i+3,j-1)
- * 							Output: Values of E(i,j)...E(i+3,j)
+ *							Output: Values of E(i,j)...E(i+3,j)
  * @param[in,out] up_f		Input: Value of F(i-1,j)
- * 							Output: Value of F(i+3,j)
+ *							Output: Value of F(i+3,j)
  * @param[in] left_h		Input: Value of H(i,j-1)...H(i+3,j-1)
  * @param[in] diag_h		Input: Value of H(i-1,j-1)
  * @param[in] up_h			Input: Value of H(i-1,j)
  * @param[out] curr_h		Output: Value of H(i,j)...H(i+3,j)
  * @param[in] flush_id		Identifier of the last row. This value controls with
- * 								row will be computed in the bottom-most blocks.
- * 								See get_flush_id function.
+ *				row will be computed in the bottom-most blocks.
+ *				See get_flush_id function.
  *
  */
 template <int RECURRENCE_TYPE, bool FLUSH_LAST_ROW>
@@ -375,22 +375,22 @@ __device__ void kernel_sw4(const int i, const int j, const unsigned char s1, con
  * Updates the maximum score of a block of ALPHA cells (K-neighborhood).
  *
  * @tparam CHECK_MAX_SCORE	Defines if the function will be executed. If it is false,
- * 								this function does absolutely nothing.
+ *								this function does absolutely nothing.
  * @tparam FLUSH_LAST_ROW	Defines if the flush_id parameter will be used.
- * 								If it is false,	all the ALPHA rows will be
- * 								processed regardless if they are out-of-range.
- * 								Otherwise, only valid rows will be processed.
+ *								If it is false,	all the ALPHA rows will be
+ *								processed regardless if they are out-of-range.
+ *								Otherwise, only valid rows will be processed.
  *
  * @param[in] i		The index of the row (top cell).
  * @param[in] j		The index of the column.
  * @param[in,out] max		The maximum score to be updated.
  * @param[in,out] max_pos	The coordinates of the maximum score.
  * @param[in] curr_h		The values of H(i,j)...H(i+3,j)
- * @param[in] absolute_row 	Defines if the row coordinates (i) stored in the max_pos
- * 							parameter must be absolute or relative.
- * 							If it is relative (false), the coordinates row may only be in
- * 							the range 0..3. If it is absolute (true), the coordinates
- * 							row is $i+inc$.
+ * @param[in] absolute_row	Defines if the row coordinates (i) stored in the max_pos
+ *							parameter must be absolute or relative.
+ *							If it is relative (false), the coordinates row may only be in
+ *							the range 0..3. If it is absolute (true), the coordinates
+ *							row is $i+inc$.
  * @param[in] flush_id		Identifier of the last row. See get_flush_id function.
  */
 template <bool CHECK_MAX_SCORE, bool FLUSH_LAST_ROW>
@@ -423,8 +423,8 @@ __device__ void kernel_check_max4(const int i, const int j,
  * horizontal bus is read directly from the busH global vector.
  *
  * @tparam USE_TEXTURE_CACHE	Enables or disable the t_busH texture read. If
- * 									it is disabled, the read is made directly
- * 									from the original busH global vector.
+ *									it is disabled, the read is made directly
+ *									from the original busH global vector.
  *
  * @param[in] idx	Index of the current thread.
  * @param[in] bank		The shared memory bank (1 or 0) from which the data will be taken.
@@ -433,7 +433,7 @@ __device__ void kernel_check_max4(const int i, const int j,
  *						If bank is 1, the data is read from bank 1 and written in bank 0.
  * @param[in] j		The index of the column.
  * @param[in] busH		Horizontal bus. This is the global vector from which we
- * 						load the H(i-1,j) and F(i-1,j) values for the first thread.
+ *						load the H(i-1,j) and F(i-1,j) values for the first thread.
  * @param[out] h	The loaded value of H(i-1,j)
  * @param[out] f	The loaded value of F(i-1,j)
  * @param[out] s	The j-th dna nucleotide of sequence#1 (horizontal)
@@ -442,16 +442,16 @@ template <bool USE_TEXTURE_CACHE>
 __device__ void kernel_load(const int idx, const int bank, const int j, int2* busH, int *h, int *f, unsigned char *s) {
 	*s = tex1Dfetch(t_seq1, j);
     if (idx) {
-    	// Threads (except the first one) must read from the shared memory.
+	// Threads (except the first one) must read from the shared memory.
         *h = s_colx[bank][idx];
         *f = s_coly[bank][idx];
     } else {
-    	// First thread of the block must read from the horizontal bus.
+	// First thread of the block must read from the horizontal bus.
         int2 temp;
         if (USE_TEXTURE_CACHE) {
-        	temp = tex1Dfetch(t_busH,j); // read from texture
+		temp = tex1Dfetch(t_busH,j); // read from texture
         } else {
-        	temp = busH[j]; // read directly from the busH global vector
+		temp = busH[j]; // read directly from the busH global vector
         }
         *h = temp.x; // H-component
         *f = temp.y; // F-component
@@ -471,7 +471,7 @@ __device__ void kernel_load(const int idx, const int bank, const int j, int2* bu
  * and it may be unaligned with the last row of the block).
  *
  * @tparam  FLUSH_LAST_ROW		Indicates if the last row of the matrix must be
- * 									stored in the busH/extraH vectors
+ *									stored in the busH/extraH vectors
  *
  * @param[in] i		The index of the row (top cell).
  * @param[in] j		The index of the column.
@@ -481,20 +481,20 @@ __device__ void kernel_load(const int idx, const int bank, const int j, int2* bu
  *						If bank is 1, the data is read from bank 0 and written in bank 1.
  *						If bank is 0, the data is read from bank 1 and written in bank 0.
  * @param[out] busH		Horizontal bus. This is the global vector that receives the
- * 						H(i+3,j) and F(i+3,j) values. If the FLUSH_LAST_ROW is active,
- * 						the busH will receive the H(m,j) and F(m,j) values, where
- * 						$m$ is the last row of the whole DP matrix. Furthermore,
- * 						when the FLUSH_LAST_ROW is active, the H(m,j) and F(m,j)
- * 						values will be stored in the busH[m-THREAD_COUNT] cell,
- * 						with THREAD_COUNT cells shifted to the left.
+ *						H(i+3,j) and F(i+3,j) values. If the FLUSH_LAST_ROW is active,
+ *						the busH will receive the H(m,j) and F(m,j) values, where
+ *						$m$ is the last row of the whole DP matrix. Furthermore,
+ *						when the FLUSH_LAST_ROW is active, the H(m,j) and F(m,j)
+ *						values will be stored in the busH[m-THREAD_COUNT] cell,
+ *						with THREAD_COUNT cells shifted to the left.
  * @param[out] extraH	Extra horizontal bus used if the FLUSH_LAST_ROW is active.
- * 						This is an auxiliary structure that receives
- * 						the values of the horizontal bus that may have an negative
- * 						index (since it is shifted THREAD_COUNT cells to the left).
- * @param[in] h 		The values of H(i,j)..H(i+3,j). This is only used when
- * 						FLUSH_LAST_ROW is active, since we must flush only
- * 						the last row of the DP matrix. Otherwise, only the
- * 						H(i+3,j) will be flushed.
+ *						This is an auxiliary structure that receives
+ *						the values of the horizontal bus that may have an negative
+ *						index (since it is shifted THREAD_COUNT cells to the left).
+ * @param[in] h			The values of H(i,j)..H(i+3,j). This is only used when
+ *						FLUSH_LAST_ROW is active, since we must flush only
+ *						the last row of the DP matrix. Otherwise, only the
+ *						H(i+3,j) will be flushed.
  * @param[in] f			The value of F(i+3,j).
  * @param[in] last_thread	The index of the last thread of the block.
  * @param[in] flush_id		The index of the last DP row in the thread. See function get_flush_id.
@@ -533,7 +533,7 @@ __device__ void kernel_flush(const int i, const int j, const int idx, const int 
 		int2 temp = make_int2(h->w, f);
         busH[j] = temp; // Store into the busH global vector.
     } else {
-    	// Store into the shared memory.
+	// Store into the shared memory.
         s_colx[bank][idx+1] = h->w;
         s_coly[bank][idx+1] = f;
     }
@@ -554,35 +554,35 @@ __device__ void kernel_flush(const int i, const int j, const int idx, const int 
  * in the edges of the matrix (vector, gap patter or zeroes). See the COLUMN_SOURCE
  * templated variable.
  *
- * @tparam COLUMN_SOURCE 	Indicates how to load the first column. Possible values are:
- * 							FROM_NULL: First column is all zeroed (local alignment)
- * 							FROM_VECTOR: First column is loaded from the loadColumn_h/loadColumn_e vectors.
- * @tparam COLUMN_DESTINATION 	Indicates how to save the last column. Possible values are:
- * 							TO_NULL: Last column is ignored
- * 							TO_VECTOR: Last column is saved into flushColumn_h/flushColumn_e vectors.
+ * @tparam COLUMN_SOURCE	Indicates how to load the first column. Possible values are:
+ *							FROM_NULL: First column is all zeroed (local alignment)
+ *							FROM_VECTOR: First column is loaded from the loadColumn_h/loadColumn_e vectors.
+ * @tparam COLUMN_DESTINATION	Indicates how to save the last column. Possible values are:
+ *							TO_NULL: Last column is ignored
+ *							TO_VECTOR: Last column is saved into flushColumn_h/flushColumn_e vectors.
  *
  * @param[in] i0	the first row of the DP matrix
  * @param[in] j0	the first column of the DP matrix
  * @param[in] i1	the last row of the DP matrix
  * @param[in] j1	the last column of the DP matrix
  * @param[in,out] i		Input: the current row.
- * 						Output: the updated row if the overflow occurred.
+ *						Output: the updated row if the overflow occurred.
  * @param[in,out] j		Input: the current column.
- * 						Output: the updated column if the overflow occurred.
+ *						Output: the updated column if the overflow occurred.
  * @param[in,out] ss    Input: the variable containing 4 nucleotides of sequence#0.
- * 						Output: the next 4 nucleotides if the overflow occurred.
- * @param[in,out] ee 	Input: the values E(i,j)...E(i+3,j)
- * 						Output: the values E(i,0)...E(i+3,0) if the overflow occurred.
- * @param[in,out] h10 	Input: the values H(i-1,j)
- * 						Output: the values H(i-1,0) if the overflow occurred.
- * @param[in,out] h00 	Input: the values H(i,j)...H(i+3,j)
- * 						Output: the values H(i,0)...H(i+3,0) if the overflow occurred.
+ *						Output: the next 4 nucleotides if the overflow occurred.
+ * @param[in,out] ee	Input: the values E(i,j)...E(i+3,j)
+ *						Output: the values E(i,0)...E(i+3,0) if the overflow occurred.
+ * @param[in,out] h10	Input: the values H(i-1,j)
+ *						Output: the values H(i-1,0) if the overflow occurred.
+ * @param[in,out] h00	Input: the values H(i,j)...H(i+3,j)
+ *						Output: the values H(i,0)...H(i+3,0) if the overflow occurred.
  * @param[in,out] flush_id	Input: The index of the last DP row in the thread. See function get_flush_id.
- * 							Output: the updated flush_id if the overflow occurred.
- * @param[in] 	loadColumn_h,loadColumn_e	the values of the first column if COLUMN_SOURCE==FROM_VECTOR.
+ *							Output: the updated flush_id if the overflow occurred.
+ * @param[in]	loadColumn_h,loadColumn_e	the values of the first column if COLUMN_SOURCE==FROM_VECTOR.
  * @param[out]  flushColumn_h,flushColumn_e	the destination of the last column if COLUMN_DESTINATION==TO_VECTOR.
  * @param[in]   idx			Index of the current thread.
- * @param[in] 	HEIGHT 		how many lines must be jumped if the overflow occurs.
+ * @param[in]	HEIGHT		how many lines must be jumped if the overflow occurs.
  */
 template <int COLUMN_SOURCE, int COLUMN_DESTINATION>
 __device__ void kernel_check_bound(const int i0, const int j0, const int i1, const int j1, int *i, int *j,
@@ -619,7 +619,7 @@ __device__ void kernel_check_bound(const int i0, const int j0, const int i1, con
  * This function processes all the THREADS_COUNT-1 internal diagonals of the short phase.
  *
  * @tparam COLUMN_SOURCE, COLUMN_DESTINATION, RECURRENCE_TYPE, CHECK_LOCATION
- * 				See these templates in the "Detailed Description" section in the beginning of this file.
+ *				See these templates in the "Detailed Description" section in the beginning of this file.
  *
  * @param[in] idx	Index of the current thread in the block.
  * @param[in] tidx	Index of the current thread in the grid.
@@ -730,12 +730,12 @@ __device__ void process_internal_diagonals_short_phase(
  * internal diagonal.
  *
  * @tparam COLUMN_SOURCE, COLUMN_DESTINATION, RECURRENCE_TYPE, CHECK_LOCATION
- * 				See these templates in the "Detailed Description" section in the beginning of this file.
+ *				See these templates in the "Detailed Description" section in the beginning of this file.
  *
  * @param[in] i0,i1		the first and last row of the DP matrix
  * @param[in] step		the id of the external diagonal (0-based)
  * @param[in] cutBlock	(cutBlock.x, cutBlock.y) is the block pruning window.
- * @param[in,out] blockResult 	stores the best score and its position for each block.
+ * @param[in,out] blockResult	stores the best score and its position for each block.
  * @param[in,out] busH		Horizontal bus used to transfer data between blocks (top-down).
  * @param[out] extraH		Extra Horizontal bus. See kernel_flush function for more information.
  * @param[in,out] busV_h,busV_e,busV_o		Vertical bus used to transfer data between blocks (left-right).
@@ -766,9 +766,9 @@ __global__ void kernel_short_phase(const int i0, const int i1,
     // Block Pruning
     bool pruneBlock;
     if (bx != 0) {
-    	pruneBlock = (bx < cutBlock.x || bx > cutBlock.y);
+	pruneBlock = (bx < cutBlock.x || bx > cutBlock.y);
     } else {
-    	pruneBlock = (cutBlock.x > 0 && cutBlock.y < blockIdx.x);
+	pruneBlock = (cutBlock.x > 0 && cutBlock.y < blockIdx.x);
     }
 	if (pruneBlock) {
 		return;
@@ -792,7 +792,7 @@ __global__ void kernel_short_phase(const int i0, const int i1,
 
 	//int flush_id = get_flush_id(i, i0, i1);
 
-
+        if (i >= i1) return;
 
 	if (i < i1) {
 		int block_i = (by*THREADS_COUNT)*ALPHA + i0;
@@ -819,7 +819,7 @@ __global__ void kernel_short_phase(const int i0, const int i1,
 			}
 		}
 	} else {
-    	blockResult[blockIdx.x].w = -INF;
+	blockResult[blockIdx.x].w = -INF;
 	}
 }
 
@@ -827,7 +827,7 @@ __global__ void kernel_short_phase(const int i0, const int i1,
  * This function processes all the internal diagonals of the long phase.
  *
  * @tparam RECURRENCE_TYPE, CHECK_LOCATION, FLUSH_LAST_ROW
- * 				See these templates in the "Detailed Description" section in the beginning of this file.
+ *				See these templates in the "Detailed Description" section in the beginning of this file.
  *
  * @param[in] xLen	Number of internal diagonals.
  * @param[in] idx	Index of the current thread in the block.
@@ -926,12 +926,12 @@ __device__ void process_internal_diagonals_long_phase(const int xLen, const int 
  * internal diagonal.
  *
  * @tparam RECURRENCE_TYPE, CHECK_LOCATION
- * 				See these templates in the "Detailed Description" section in the beginning of this file.
+ *				See these templates in the "Detailed Description" section in the beginning of this file.
  *
  * @param[in] i0,i1		the first and last row of the DP matrix
  * @param[in] step		the id of the external diagonal (0-based)
  * @param[in] cutBlock	(cutBlock.x, cutBlock.y) is the pruning window.
- * @param[in,out] blockResult 	stores the best score and its position for each block.
+ * @param[in,out] blockResult	stores the best score and its position for each block.
  * @param[in,out] busH		Horizontal bus used to transfer data between blocks (top-down).
  * @param[out] extraH		Extra Horizontal bus. See kernel_flush function for more information.
  * @param[in,out] busV_h,busV_e,busV_o		Vertical bus used to transfer data between blocks (left-right).
@@ -978,6 +978,8 @@ __global__ void kernel_long_phase(
     max_pos.y = -1;//blockResult[blockIdx.x].y;
     int max = -INF;//blockResult[bx].w;
 
+        if (i >= i1) return;
+       
 	if (i < i1) {
 		const int block_i = (by*THREADS_COUNT)*ALPHA + i0;
 		if (block_i+THREADS_COUNT*ALPHA < i1) {
@@ -1000,7 +1002,7 @@ __global__ void kernel_long_phase(
 			}
 		}
 	} else {
-    	blockResult[blockIdx.x].w = -INF;
+	blockResult[blockIdx.x].w = -INF;
 	}
 }
 
@@ -1008,7 +1010,7 @@ __global__ void kernel_long_phase(
  * This function processes the internal diagonals of the single phase (very small sequences).
  *
  * @tparam COLUMN_SOURCE, COLUMN_DESTINATION, RECURRENCE_TYPE, CHECK_LOCATION, FLUSH_LAST_ROW
- * 				See these templates in the "Detailed Description" section in the beginning of this file.
+ *				See these templates in the "Detailed Description" section in the beginning of this file.
  *
  * @param[in] xLen	Number of internal diagonals.
  * @param[in] idx	Index of the current thread in the single block.
@@ -1050,7 +1052,7 @@ __device__ void process_internal_diagonals_single_phase(
     int _k = xLen;
     int index = 1;
     for (; _k; _k--) {
-    	int4 curr_h;
+	int4 curr_h;
         int  up_h;
         int  up_f;
 		kernel_check_bound<COLUMN_SOURCE, COLUMN_DESTINATION>(i0, j0, i1, j1, &i, &j, &ss, &left_e, &diag_h, &left_h, &flush_id, loadColumn_h, loadColumn_e, flushColumn_h, flushColumn_e, idx, blockDim.x*ALPHA);
@@ -1083,12 +1085,12 @@ __device__ void process_internal_diagonals_single_phase(
  * be executed.
  *
  * @tparam COLUMN_SOURCE, COLUMN_DESTINATION, RECURRENCE_TYPE, CHECK_LOCATION
- * 				See these templates in the "Detailed Description" section in the beginning of this file.
+ *				See these templates in the "Detailed Description" section in the beginning of this file.
  *
  * @param[in] i0,i1		the first and last row of the DP matrix
  * @param[in] step		the id of the external diagonal (0-based)
  * @param[in] cutBlock	(cutBlock.x, cutBlock.y) is the pruning window.
- * @param[in,out] blockResult 	stores the best score and its position for each block.
+ * @param[in,out] blockResult	stores the best score and its position for each block.
  * @param[in,out] busH		Horizontal bus used to transfer data between external diagonals.
  * @param[out] extraH		Extra Horizontal bus. See kernel_flush function for more information.
  * @param[in,out] busV_h,busV_e,busV_o		Vertical bus used to transfer data between external diagonals.
@@ -1130,7 +1132,9 @@ __global__ void kernel_single_phase(
 
     int flush_id = get_flush_id(i, i0, i1);
 	// TODO otimizar considerando warps
-	if (i < i1) {
+	if (i >= i1) return;
+
+        if (i < i1) {
 		const int block_i = (by*blockDim.x)*ALPHA +i0;
 		//const int flush_id = get_flush_id(i, i0, i1);
 		if (block_i+blockDim.x*ALPHA < i1) {
@@ -1244,7 +1248,7 @@ void initializeBusHInfinity(const int p0, const int p1, int2* d_busH) {
  * executable size).
  *
  * @tparam COLUMN_SOURCE, COLUMN_DESTINATION, RECURRENCE_TYPE, CHECK_LOCATION
- * 				See these templates in the "Detailed Description" section in the beginning of this file.
+ *				See these templates in the "Detailed Description" section in the beginning of this file.
  * @param blocks Number of blocks. If blocks is equal to 1, then the
  * single phase kernel is called, otherwise it calls the short/long kernels.
  * @param threads Maximum number of threads per block.
