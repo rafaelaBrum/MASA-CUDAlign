@@ -13,7 +13,7 @@ echo " ----------------------------
  ----------------------------"
 s3fs rafaela-masa-cudalign tests/
 cd tests/
-COUNTER=3
+COUNTER=1_$1
 echo "Counter = $COUNTER"
 echo " ----------------------------
   Test 1-3M
