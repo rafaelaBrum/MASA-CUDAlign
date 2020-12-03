@@ -7,14 +7,6 @@ from datetime import datetime
 
 from ssh_client import SSHClient
 
-def __attach_ebs(self, internal_device_name, path):
-
-
-     # Mount Directory
-     cmd = 'sudo mount {} {}'.format(internal_device_name, path)
-
-     self.ssh.execute_command(cmd, output=True)  # mount directory
-
 def create_instance(
         image_id, instance_type, key_name, placement, security_group_names, instance_market_options, tags):
     """
@@ -79,7 +71,7 @@ ec2 = boto3.resource('ec2')
 client_ec2 = boto3.client('ec2')
 imageId = {'t2.micro': "ami-09685b54c80020d8c",'g2.2xlarge' : "ami-035702788548e7738", 'g4dn.xlarge': "ami-0c4665c2149ec7fdc", 'g3s.xlarge':"ami-09b10133456de8dca", 'p2.xlarge': "ami-0b13bb0622a100af2", 'g4dn.2xlarge': "ami-0c4665c2149ec7fdc" }
 type_instances = ['t2.micro', 'g2.2xlarge', 'g3s.xlarge', 'g4dn.xlarge', 'p2.xlarge', 'g4dn.2xlarge']
-#type_instances = ['t2.micro', 'g2.2xlarge', 'g3s.xlarge', 'p2.xlarge']
+#type_instances = ['t2.micro', 'g4dn.xlarge', 'g4dn.2xlarge']
 path_to_key_pair = '/home/ubuntu/'
 key_pair_name = "par_iam_rafaelabrum"
 security_groups = ["rafaela"]
@@ -129,8 +121,10 @@ run_file = 'run_1.sh'
 
 export_command = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-10.2/lib64; echo $LD_LIBRARY_PATH; export PATH=$PATH:/usr/local/cuda-10.2/bin:/home/ubuntu/MASA-CUDAlign/masa-cudalign-3.9.1.1024; echo $PATH; '
 
+internal_device_name = {'t2.micro': "/dev/xvdf",'g2.2xlarge' : "/dev/xvdf", 'g4dn.xlarge': "/dev/nvme2n1", 'g3s.xlarge':"/dev/xvdf", 'p2.xlarge': "/dev/xvdf", 'g4dn.2xlarge': "/dev/nvme2n1" }
+
 volume_id = 'vol-00e2d2c2debe85987'
-internal_device_name = '/dev/xvdf'
+
 ebs_path = 'tests_ebs/'
 
 for type_instance in type_instances:
@@ -146,14 +140,14 @@ for type_instance in type_instances:
   instance.wait_until_running()
   instance.load()
   print("Created instance " + instance.instance_id + " do tipo " + type_instance + " com IP " + instance.public_ip_address)
-#  print "Preco spot do tipo " + type_instance + " = US$ " + str(get_preemptible_price(type_instance, placement['AvailabilityZone'])[0][1]) + " por hora"
+  print "Preco spot do tipo " + type_instance + " = US$ " + str(get_preemptible_price(type_instance, placement['AvailabilityZone'])[0][1]) + " por hora"
   sys.stdout.flush()
 
   # attaching EBS volume to instance
   waiter = client_ec2.get_waiter('volume_available')
   waiter.wait(VolumeIds=[volume_id])
   try:
-    client_ec2.attach_volume(VolumeId=volume_id, InstanceId=instance.instance_id,Device=internal_device_name)
+    client_ec2.attach_volume(VolumeId=volume_id, InstanceId=instance.instance_id,Device='/dev/xvdf')
     print("EBS attached")
     attached = True
   except Exception as e:
@@ -173,9 +167,9 @@ for type_instance in type_instances:
       stdout, stderr, retcode = ssh.execute_command(command, output=True)
       print("Command mkdir executed")
       print(stdout)
-      command = 'sudo mount {} {}'.format(internal_device_name, ebs_path)
+      command = 'sudo mount {} {}'.format(internal_device_name[type_instance], ebs_path)
       stdout, stderr, retcode = ssh.execute_command(command, output=True)
-      print("Command mount executed")
+      print("Command '" + command + "' executed")
       print(stdout)
       stdout, stderr, retcode = ssh.execute_command('ls -la', output=True)
       print("Command 'ls -la' executed")
@@ -190,13 +184,13 @@ for type_instance in type_instances:
       print("Command '" + command + "' executed")
       print(stdout)
       # unmount EBS volume
-      command = 'sudo umount {}'.format(internal_device_name)
+      command = 'sudo umount {}'.format(internal_device_name[type_instance])
       stdout, stderr, retcode = ssh.execute_command(command, output=True)
       print("Command '" + command + "' executed")
       print(stdout)
       ssh.close_connection()
-#    print "Preco spot do tipo " + type_instance + " = US$ " + str(get_preemptible_price(type_instance, placement['AvailabilityZone'])[0][1]) + " por hora"
-#    sys.stdout.flush()
+    print "Preco spot do tipo " + type_instance + " = US$ " + str(get_preemptible_price(type_instance, placement['AvailabilityZone'])[0][1]) + " por hora"
+    sys.stdout.flush()
   response = client_ec2.cancel_spot_instance_requests(SpotInstanceRequestIds=[instance.spot_instance_request_id])
   print("Cancelling spot request")
   print(response)
