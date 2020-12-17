@@ -2,18 +2,8 @@
 echo " ----------------------------
   Running tests
  ----------------------------"
-if [ ! -d "tests/" ]; then
-    echo " ----------------------------
-   Creating tests root folder
- ----------------------------"
-    mkdir tests
-fi
-echo " ----------------------------
-  Mounting S3 bucket
- ----------------------------"
-s3fs rafaela-masa-cudalign tests/
-cd tests/
-COUNTER=2
+cd tests_ebs/
+COUNTER=3_$1
 echo "Counter = $COUNTER"
 echo " ----------------------------
   Test 1-3M

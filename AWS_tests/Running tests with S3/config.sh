@@ -34,7 +34,6 @@ else
   if [ ! -d "tests/" ]; then
     mkdir tests
     s3fs rafaela-masa-cudalign tests/
-fi
-cd tests/
-
+  fi
+  cd tests/
 fi
