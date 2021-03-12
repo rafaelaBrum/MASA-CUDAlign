@@ -1,0 +1,5 @@
+Makefile
+config.*
+.deps/
+.dirstamp
+stamp-h1
